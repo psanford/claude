@@ -5,7 +5,8 @@ package claude
 // See https://docs.anthropic.com/claude/reference/complete_post for details
 type TextCompletion struct {
 	// The model that will complete your prompt.
-	Model string `json:"model"`
+	// Required field except for AWS Bedrock where it must be empty.
+	Model string `json:"model,omitempty"`
 	// The prompt that you want Claude to complete.
 	// For proper response generation you will need to format your prompt using alternating
 	// \n\nHuman: and \n\nAssistant: conversational turns.
@@ -67,7 +68,8 @@ type ErrorResponse struct {
 // See https://docs.anthropic.com/claude/reference/messages_post for details
 type MessageRequest struct {
 	// The model that will complete your prompt.
-	Model string `json:"model"`
+	// Required field except for AWS Bedrock where it must be empty.
+	Model string `json:"model,omitempty"`
 	// Input messages.
 	// Models are trained to operate on alternating user and assistant conversational turns.
 	// When creating a new Message, you specify the prior conversational turns with the messages parameter,
