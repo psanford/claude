@@ -109,6 +109,9 @@ type MessageRequest struct {
 	// Used to remove "long tail" low probability responses.
 	// Recommended for advanced use cases only. You usually only need to use temperature
 	TopK *int `json:"top_k,omitempty"`
+	// AnthropicVersion is an AWS Bedrock specific field. For bedrock, it should be set to "bedrock-2023-05-31".
+	// Otherwise it should be left blank.
+	AnthropicVersion string `json:"anthropic_version,omitempty"`
 }
 
 type MessageResponse struct {
