@@ -1,5 +1,7 @@
 package claude
 
+import "encoding/json"
+
 // TextCompletion represents the request to the legacy text completions api.
 // This is deprecated. You should use the messages API vis MessageRequest instead.
 // See https://docs.anthropic.com/claude/reference/complete_post for details
@@ -128,6 +130,42 @@ type MessageResponse struct {
 		InputTokens  int `json:"input_tokens"`
 		OutputTokens int `json:"output_tokens"`
 	} `json:"usage"`
+}
+
+func (m *MessageResponse) UnmarshalJSON(b []byte) error {
+	type concreteResponse struct {
+		ID           string             `json:"id"`
+		Type         string             `json:"type"`
+		Role         string             `json:"role"`
+		Content      []*turnContentText `json:"content"`
+		Model        string             `json:"model"`
+		StopReason   string             `json:"stop_reason"`
+		StopSequence *string            `json:"stop_sequence"`
+		Usage        struct {
+			InputTokens  int `json:"input_tokens"`
+			OutputTokens int `json:"output_tokens"`
+		} `json:"usage"`
+	}
+
+	var c concreteResponse
+	err := json.Unmarshal(b, &c)
+	if err != nil {
+		return err
+	}
+
+	m.ID = c.ID
+	m.Type = c.Type
+	m.Role = c.Role
+	m.Content = make([]TurnContent, len(c.Content))
+	for i, c := range c.Content {
+		m.Content[i] = c
+	}
+	m.Model = c.Model
+	m.StopReason = c.StopReason
+	m.StopSequence = c.StopSequence
+	m.Usage = c.Usage
+
+	return nil
 }
 
 type MessageTurn struct {
