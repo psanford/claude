@@ -1,6 +1,9 @@
 package claude
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 // TextCompletion represents the request to the legacy text completions api.
 // This is deprecated. You should use the messages API vis MessageRequest instead.
@@ -58,14 +61,6 @@ type TextCompletionResponse struct {
 	Model      string `json:"model"`
 }
 
-type ErrorResponse struct {
-	Type  string `json:"type"`
-	Error struct {
-		Type    string `json:"type"`
-		Message string `json:"message"`
-	} `json:"error"`
-}
-
 // MessageRequest is a request struct for the messages API.
 // See https://docs.anthropic.com/claude/reference/messages_post for details
 type MessageRequest struct {
@@ -118,7 +113,7 @@ type MessageRequest struct {
 	AnthropicVersion string `json:"anthropic_version,omitempty"`
 }
 
-type MessageResponse struct {
+type MessageStart struct {
 	ID           string        `json:"id"`
 	Type         string        `json:"type"`
 	Role         string        `json:"role"`
@@ -132,7 +127,7 @@ type MessageResponse struct {
 	} `json:"usage"`
 }
 
-func (m *MessageResponse) UnmarshalJSON(b []byte) error {
+func (m *MessageStart) UnmarshalJSON(b []byte) error {
 	type concreteResponse struct {
 		ID           string             `json:"id"`
 		Type         string             `json:"type"`
@@ -229,3 +224,55 @@ func (t *turnContentImage) Type() string {
 func (t *turnContentImage) TextContent() string {
 	return ""
 }
+
+type MessageEvent struct {
+	Type string
+	Data interface{}
+}
+
+type ContentBlockStart struct {
+	ContentBlock struct {
+		Text string `json:"text"`
+		Type string `json:"type"`
+	} `json:"content_block"`
+	Index int `json:"index"`
+}
+
+type MessagePing struct {
+}
+
+type ContentBlockDelta struct {
+	Delta struct {
+		Text string `json:"text"`
+		Type string `json:"type"`
+	} `json:"delta"`
+	Index int64 `json:"index"`
+}
+
+type ContentBlockStop struct {
+	Index int64 `json:"index"`
+}
+
+type MessageDelta struct {
+	Delta struct {
+		StopReason   string  `json:"stop_reason"`
+		StopSequence *string `json:"stop_sequence"`
+	} `json:"delta"`
+	Usage struct {
+		OutputTokens int64 `json:"output_tokens"`
+	} `json:"usage"`
+}
+
+type MessageStop struct {
+}
+
+type ClaudeError struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+}
+
+func (c ClaudeError) Error() string {
+	return fmt.Sprintf("%s: %s", c.Type, c.Message)
+}
+
+type ClientError error
