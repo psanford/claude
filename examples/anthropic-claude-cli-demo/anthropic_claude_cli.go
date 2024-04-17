@@ -65,6 +65,7 @@ func completeResponse(ctx context.Context, client *anthropic.Client, prompt stri
 			},
 		},
 	}
+
 	respMeta, err := client.Message(ctx, &req)
 	if err != nil {
 		log.Fatal(err)
