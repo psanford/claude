@@ -181,6 +181,50 @@ type MessageTurn struct {
 	Content []TurnContent `json:"content"`
 }
 
+func (m *MessageTurn) UnmarshalJSON(data []byte) error {
+	var raw struct {
+		Role    string            `json:"role"`
+		Content []json.RawMessage `json:"content"`
+	}
+
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	m.Role = raw.Role
+	m.Content = make([]TurnContent, len(raw.Content))
+
+	for i, rawContent := range raw.Content {
+		var contentType struct {
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal(rawContent, &contentType); err != nil {
+			return err
+		}
+
+		switch contentType.Type {
+		case TurnText:
+			var textContent turnContentText
+			if err := json.Unmarshal(rawContent, &textContent); err != nil {
+				return err
+			}
+			m.Content[i] = &textContent
+
+		case TurnImage:
+			var imageContent turnContentImage
+			if err := json.Unmarshal(rawContent, &imageContent); err != nil {
+				return err
+			}
+			m.Content[i] = &imageContent
+
+		default:
+			return fmt.Errorf("unknown content type: %s", contentType.Type)
+		}
+	}
+
+	return nil
+}
+
 type TurnContent interface {
 	Type() string
 	TextContent() string

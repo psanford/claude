@@ -1,6 +1,7 @@
 package claude
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"testing"
 
@@ -27,14 +28,14 @@ func TestUnmarshalMessageResponse(t *testing.T) {
   }
 }`
 
-	var mr MessageResponse
+	var mr MessageStart
 
 	err := json.Unmarshal([]byte(respJSON), &mr)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	expect := MessageResponse{
+	expect := MessageStart{
 		ID:           "msg_013Zva2CMHLNnXjNJJKqJ2EF",
 		Model:        "claude-3-opus-20240229",
 		Role:         "assistant",
@@ -50,5 +51,126 @@ func TestUnmarshalMessageResponse(t *testing.T) {
 
 	if !cmp.Equal(mr, expect) {
 		t.Fatalf(cmp.Diff(mr, expect))
+	}
+}
+
+func TestMessageTurnUnmarshalJSON(t *testing.T) {
+	mustDecodeB64 := func(s string) []byte {
+		b, err := base64.StdEncoding.DecodeString(s)
+		if err != nil {
+			panic(err)
+		}
+		return b
+	}
+
+	tests := []struct {
+		name     string
+		input    string
+		expected MessageTurn
+		wantErr  bool
+	}{
+		{
+			name: "Text content only",
+			input: `{
+				"role": "user",
+				"content": [
+					{"type": "text", "text": "Hello, world!"}
+				]
+			}`,
+			expected: MessageTurn{
+				Role: "user",
+				Content: []TurnContent{
+					&turnContentText{Typ: "text", Text: "Hello, world!"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Image content only",
+			input: `{
+				"role": "assistant",
+				"content": [
+					{"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "iVBORw0KGgo="}}
+				]
+			}`,
+			expected: MessageTurn{
+				Role: "assistant",
+				Content: []TurnContent{
+					&turnContentImage{
+						Typ: "image",
+						Source: struct {
+							Type      string `json:"type"`
+							MediaType string `json:"media_type"`
+							Data      []byte `json:"data"`
+						}{
+							Type:      "base64",
+							MediaType: "image/png",
+							Data:      mustDecodeB64("iVBORw0KGgo="),
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Mixed content",
+			input: `{
+				"role": "user",
+				"content": [
+					{"type": "text", "text": "Here's an image:"},
+					{"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": "/9j/4AAQSkZJRg=="}},
+					{"type": "text", "text": "What do you think?"}
+				]
+			}`,
+			expected: MessageTurn{
+				Role: "user",
+				Content: []TurnContent{
+					&turnContentText{Typ: "text", Text: "Here's an image:"},
+					&turnContentImage{
+						Typ: "image",
+						Source: struct {
+							Type      string `json:"type"`
+							MediaType string `json:"media_type"`
+							Data      []byte `json:"data"`
+						}{
+							Type:      "base64",
+							MediaType: "image/jpeg",
+							Data:      mustDecodeB64("/9j/4AAQSkZJRg=="),
+						},
+					},
+					&turnContentText{Typ: "text", Text: "What do you think?"},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Unknown content type",
+			input: `{
+				"role": "user",
+				"content": [
+					{"type": "unknown", "data": "This should fail"}
+				]
+			}`,
+			expected: MessageTurn{},
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got MessageTurn
+			err := json.Unmarshal([]byte(tt.input), &got)
+
+			if (err != nil) != tt.wantErr {
+				t.Errorf("UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if !tt.wantErr {
+				if diff := cmp.Diff(tt.expected, got); diff != "" {
+					t.Errorf("UnmarshalJSON() mismatch (-want +got):\n%s", diff)
+				}
+			}
+		})
 	}
 }
