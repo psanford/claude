@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	"github.com/psanford/claude"
+	"github.com/psanford/claude/clientiface"
 )
 
 var MessagesURL = "https://api.anthropic.com/v1/messages"
@@ -18,6 +19,8 @@ type Client struct {
 	apiKey       string
 	roundTripper http.RoundTripper
 }
+
+var clientIfaceAssert = clientiface.Client(&Client{})
 
 func NewClient(apiKey string, opts ...Option) *Client {
 	c := &Client{
@@ -29,7 +32,7 @@ func NewClient(apiKey string, opts ...Option) *Client {
 	return c
 }
 
-func (c *Client) Message(ctx context.Context, req *claude.MessageRequest) (*MessageResponseMeta, error) {
+func (c *Client) Message(ctx context.Context, req *claude.MessageRequest) (claude.MessageResponse, error) {
 	jsonReq, err := json.Marshal(req)
 	if err != nil {
 		return nil, err
@@ -78,13 +81,13 @@ func (c *Client) Message(ctx context.Context, req *claude.MessageRequest) (*Mess
 	}
 }
 
-func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (*MessageResponseMeta, error) {
+func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (claude.MessageResponse, error) {
 	eventsCh := decodeSSE(ctx, resp.Body)
 
 	ch := make(chan claude.MessageEvent)
-	meta := MessageResponseMeta{
-		Responses:    ch,
-		HTTPResponse: resp,
+	meta := messageResponse{
+		responses:    ch,
+		httpResponse: resp,
 	}
 
 	go func() {
@@ -95,7 +98,7 @@ func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (*MessageRe
 			if evt.Error != nil {
 				msg = claude.MessageEvent{
 					Type: "_client_error",
-					Data: claude.ClientError(evt.Error),
+					Data: claude.NewClientError(evt.Error),
 				}
 				select {
 				case ch <- msg:
@@ -107,7 +110,7 @@ func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (*MessageRe
 
 			msg.Type = evt.Name
 
-			var innerMsg any
+			var innerMsg claude.MessageContent
 
 			switch evt.Name {
 			case "message_start":
@@ -127,7 +130,7 @@ func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (*MessageRe
 			default:
 				msg = claude.MessageEvent{
 					Type: "_client_error",
-					Data: claude.ClientError(fmt.Errorf("unknown event type: %s", evt.Name)),
+					Data: claude.NewClientError(fmt.Errorf("unknown event type: %s", evt.Name)),
 				}
 				select {
 				case ch <- msg:
@@ -141,7 +144,7 @@ func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (*MessageRe
 			if err != nil {
 				msg = claude.MessageEvent{
 					Type: "_client_error",
-					Data: fmt.Errorf("parse event err: %w", err),
+					Data: claude.NewClientError(fmt.Errorf("parse event err: %w", err)),
 				}
 				select {
 				case ch <- msg:
@@ -163,7 +166,7 @@ func (c *Client) handleSSE(ctx context.Context, resp *http.Response) (*MessageRe
 	return &meta, nil
 }
 
-func (c *Client) handleNonStreamingResponse(ctx context.Context, resp *http.Response) (*MessageResponseMeta, error) {
+func (c *Client) handleNonStreamingResponse(ctx context.Context, resp *http.Response) (claude.MessageResponse, error) {
 	d := json.NewDecoder(resp.Body)
 	var msg claude.MessageStart
 	err := d.Decode(&msg)
@@ -172,14 +175,14 @@ func (c *Client) handleNonStreamingResponse(ctx context.Context, resp *http.Resp
 	}
 
 	ch := make(chan claude.MessageEvent)
-	meta := MessageResponseMeta{
-		Responses:    ch,
-		HTTPResponse: resp,
+	meta := messageResponse{
+		responses:    ch,
+		httpResponse: resp,
 	}
 
 	evt := claude.MessageEvent{
 		Type: msg.Type,
-		Data: msg,
+		Data: &msg,
 	}
 	go func() {
 		select {
@@ -193,9 +196,17 @@ func (c *Client) handleNonStreamingResponse(ctx context.Context, resp *http.Resp
 	return &meta, nil
 }
 
-type MessageResponseMeta struct {
-	Responses    <-chan claude.MessageEvent
-	HTTPResponse *http.Response
+type messageResponse struct {
+	responses    <-chan claude.MessageEvent
+	httpResponse *http.Response
+}
+
+func (m *messageResponse) Responses() <-chan claude.MessageEvent {
+	return m.responses
+}
+
+func (m *messageResponse) HTTPResponse() *http.Response {
+	return m.httpResponse
 }
 
 func (c *Client) httpClient() *http.Client {

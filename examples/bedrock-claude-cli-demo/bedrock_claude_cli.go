@@ -9,8 +9,10 @@ import (
 	"log"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/psanford/claude"
-	"github.com/psanford/claude/anthropic"
+	"github.com/psanford/claude/bedrock"
 	"github.com/psanford/claude/clientiface"
 )
 
@@ -26,10 +28,12 @@ func main() {
 	ctx := context.Background()
 	flag.Parse()
 
-	apiKey := os.Getenv("CLAUDE_API_KEY")
-	if apiKey == "" {
-		log.Fatalf("Must set environment variable CLAUDE_API_KEY")
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	bedrockSDK := bedrockruntime.NewFromConfig(cfg)
 
 	fmt.Fprintln(os.Stderr, "Enter prompt. Press ctrl-d to send to API")
 
@@ -42,7 +46,8 @@ func main() {
 	if len(prompt) == 0 {
 		log.Fatal("Empty prompt, aborting")
 	}
-	client := anthropic.NewClient(apiKey)
+
+	client := bedrock.NewClient(bedrockSDK)
 
 	if *streaming {
 		streamingResponse(ctx, client, string(prompt))
@@ -74,7 +79,7 @@ func completeResponse(ctx context.Context, client clientiface.Client, prompt str
 	resp := <-respMeta.Responses()
 
 	if resp.Type != "message" {
-		log.Fatalf("error: %s", resp.Data)
+		log.Fatalf("error: resp.Type=%s %s", resp.Type, resp.Data)
 	}
 
 	msg, ok := resp.Data.(*claude.MessageStart)

@@ -3,6 +3,7 @@ package claude
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // TextCompletion represents the request to the legacy text completions api.
@@ -113,6 +114,10 @@ type MessageRequest struct {
 	AnthropicVersion string `json:"anthropic_version,omitempty"`
 }
 
+type MessageResponse interface {
+	Responses() <-chan MessageEvent
+}
+
 type MessageStart struct {
 	ID           string        `json:"id"`
 	Type         string        `json:"type"`
@@ -125,6 +130,14 @@ type MessageStart struct {
 		InputTokens  int `json:"input_tokens"`
 		OutputTokens int `json:"output_tokens"`
 	} `json:"usage"`
+}
+
+func (c *MessageStart) Text() string {
+	text := make([]string, len(c.Content))
+	for i, content := range c.Content {
+		text[i] = content.TextContent()
+	}
+	return strings.Join(text, "")
 }
 
 func (m *MessageStart) UnmarshalJSON(b []byte) error {
@@ -227,7 +240,11 @@ func (t *turnContentImage) TextContent() string {
 
 type MessageEvent struct {
 	Type string
-	Data interface{}
+	Data MessageContent
+}
+
+type MessageContent interface {
+	Text() string
 }
 
 type ContentBlockStart struct {
@@ -238,7 +255,15 @@ type ContentBlockStart struct {
 	Index int `json:"index"`
 }
 
+func (c *ContentBlockStart) Text() string {
+	return c.ContentBlock.Text
+}
+
 type MessagePing struct {
+}
+
+func (c *MessagePing) Text() string {
+	return ""
 }
 
 type ContentBlockDelta struct {
@@ -249,8 +274,16 @@ type ContentBlockDelta struct {
 	Index int64 `json:"index"`
 }
 
+func (c *ContentBlockDelta) Text() string {
+	return c.Delta.Text
+}
+
 type ContentBlockStop struct {
 	Index int64 `json:"index"`
+}
+
+func (c *ContentBlockStop) Text() string {
+	return ""
 }
 
 type MessageDelta struct {
@@ -263,7 +296,15 @@ type MessageDelta struct {
 	} `json:"usage"`
 }
 
+func (c *MessageDelta) Text() string {
+	return ""
+}
+
 type MessageStop struct {
+}
+
+func (c *MessageStop) Text() string {
+	return ""
 }
 
 type ClaudeError struct {
@@ -271,8 +312,28 @@ type ClaudeError struct {
 	Message string `json:"message"`
 }
 
+func (c *ClaudeError) Text() string {
+	return ""
+}
+
 func (c ClaudeError) Error() string {
 	return fmt.Sprintf("%s: %s", c.Type, c.Message)
 }
 
-type ClientError error
+type ClientError struct {
+	error error
+}
+
+func NewClientError(err error) *ClientError {
+	return &ClientError{
+		error: err,
+	}
+}
+
+func (c *ClientError) Error() string {
+	return c.Error()
+}
+
+func (c *ClientError) Text() string {
+	return ""
+}
