@@ -5,6 +5,7 @@ package bedrock
 type BedrockModel string
 
 const (
+	Claude3Dot5Sonnet  BedrockModel = "anthropic.claude-3-5-sonnet-20240620-v1:0"
 	Claude3Opus        BedrockModel = "anthropic.claude-3-opus-20240229-v1:0"
 	Claude3Sonnet      BedrockModel = "anthropic.claude-3-sonnet-20240229-v1:0"
 	Claude3Haiku       BedrockModel = "anthropic.claude-3-haiku-20240307-v1:0"
