@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"mime"
 	"net/http"
 
@@ -30,10 +29,8 @@ func HandleResponse(ctx context.Context, resp *http.Response) (claude.MessageRes
 	contentType := resp.Header.Get("Content-Type")
 	mediatype, _, _ := mime.ParseMediaType(contentType)
 	if mediatype == "text/event-stream" {
-		log.Println("streaming response")
 		return handleSSE(ctx, resp)
 	} else if mediatype == "application/json" {
-		log.Println("non-streaming response")
 		return handleNonStreamingResponse(ctx, resp)
 	} else {
 		return nil, fmt.Errorf("unexpected response content-type: %s", contentType)
