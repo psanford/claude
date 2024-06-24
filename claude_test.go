@@ -144,6 +144,47 @@ func TestMessageTurnUnmarshalJSON(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "Tool Use content",
+			input: `{
+				"role": "assistant",
+				"content": [
+					{"type": "tool_use", "id": "tool1", "name": "calculator", "input": {"operation": "add", "numbers": [1, 2, 3]}}
+				]
+			}`,
+			expected: MessageTurn{
+				Role: "assistant",
+				Content: []TurnContent{
+					&TurnContentToolUse{
+						Typ:   "tool_use",
+						ID:    "tool1",
+						Name:  "calculator",
+						Input: map[string]interface{}{"operation": "add", "numbers": []interface{}{float64(1), float64(2), float64(3)}},
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Tool Result content",
+			input: `{
+				"role": "assistant",
+				"content": [
+					{"type": "tool_result", "tool_use_id": "tool1", "content": "The result is 6"}
+				]
+			}`,
+			expected: MessageTurn{
+				Role: "assistant",
+				Content: []TurnContent{
+					&turnContentToolResult{
+						Typ:         "tool_result",
+						ToolUseID:   "tool1",
+						ToolContent: "The result is 6",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "Unknown content type",
 			input: `{
 				"role": "user",

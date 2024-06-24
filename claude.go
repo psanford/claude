@@ -107,11 +107,35 @@ type MessageRequest struct {
 	TopP *float64 `json:"top_p,omitempty"`
 	// Only sample from the top K options for each subsequent token.
 	// Used to remove "long tail" low probability responses.
-	// Recommended for advanced use cases only. You usually only need to use temperature
+	// Recommended for advanced use cases only. You usually only need to use temperature.
 	TopK *int `json:"top_k,omitempty"`
 	// AnthropicVersion is used for AWS Bedrock and GCP Vertex.
 	// The client implementations in this library will set this for you so you can leave it blank.
 	AnthropicVersion string `json:"anthropic_version,omitempty"`
+	// How the model should use the provided tools.
+	ToolChoice *ToolChoice `json:"tool_choice,omitempty"`
+	// Definitions of tools that the model may use.
+	Tools []Tool `json:"tools,omitempty"`
+}
+
+// Tool defines a tool that the model may use.
+type Tool struct {
+	// Name of the tool.
+	Name string `json:"name"`
+	// Optional description of the tool.
+	Description string `json:"description,omitempty"`
+	// JSON schema for the tool input shape that the model will produce in tool_use output content blocks.
+	InputSchema any `json:"input_schema"`
+}
+
+// ToolChoice defines how the model should use the provided tools.
+type ToolChoice struct {
+	// Specifies that the model should use a specific tool.
+	Tool string `json:"tool,omitempty"`
+	// Specifies that the model should use any available tool.
+	Any bool `json:"any,omitempty"`
+	// Specifies that the model should decide which tool to use.
+	Auto bool `json:"auto,omitempty"`
 }
 
 type MessageResponse interface {
@@ -217,6 +241,20 @@ func (m *MessageTurn) UnmarshalJSON(data []byte) error {
 			}
 			m.Content[i] = &imageContent
 
+		case TurnToolUse:
+			var toolUse TurnContentToolUse
+			if err := json.Unmarshal(rawContent, &toolUse); err != nil {
+				return err
+			}
+			m.Content[i] = &toolUse
+
+		case TurnToolResult:
+			var toolResult turnContentToolResult
+			if err := json.Unmarshal(rawContent, &toolResult); err != nil {
+				return err
+			}
+			m.Content[i] = &toolResult
+
 		default:
 			return fmt.Errorf("unknown content type: %s", contentType.Type)
 		}
@@ -231,8 +269,10 @@ type TurnContent interface {
 }
 
 const (
-	TurnText  = "text"
-	TurnImage = "image"
+	TurnText       = "text"
+	TurnImage      = "image"
+	TurnToolUse    = "tool_use"
+	TurnToolResult = "tool_result"
 )
 
 func TextContent(msg string) TurnContent {
@@ -275,11 +315,48 @@ func ImageContent(mediaType string, image []byte) TurnContent {
 }
 
 func (t *turnContentImage) Type() string {
-	return TurnText
+	return TurnImage
 }
 
 func (t *turnContentImage) TextContent() string {
 	return ""
+}
+
+type TurnContentToolUse struct {
+	Typ   string      `json:"type"`
+	ID    string      `json:"id"`
+	Name  string      `json:"name"`
+	Input interface{} `json:"input"`
+}
+
+func (t *TurnContentToolUse) Type() string {
+	return TurnToolUse
+}
+
+func (t *TurnContentToolUse) TextContent() string {
+	return ""
+}
+
+func ToolResultContent(toolUseID, content string) TurnContent {
+	return &turnContentToolResult{
+		Typ:         TurnToolResult,
+		ToolUseID:   toolUseID,
+		ToolContent: content,
+	}
+}
+
+type turnContentToolResult struct {
+	Typ         string `json:"type"`
+	ToolUseID   string `json:"tool_use_id"`
+	ToolContent string `json:"content"`
+}
+
+func (t *turnContentToolResult) Type() string {
+	return TurnToolResult
+}
+
+func (t *turnContentToolResult) TextContent() string {
+	return t.ToolContent
 }
 
 type MessageEvent struct {
