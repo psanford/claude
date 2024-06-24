@@ -30,7 +30,7 @@ func NewClient(apiKey string, opts ...Option) *Client {
 	return c
 }
 
-func (c *Client) Message(ctx context.Context, req *claude.MessageRequest) (claude.MessageResponse, error) {
+func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, options ...clientiface.Option) (claude.MessageResponse, error) {
 	jsonReq, err := json.Marshal(req)
 	if err != nil {
 		return nil, err

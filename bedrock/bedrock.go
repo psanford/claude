@@ -29,7 +29,7 @@ func NewClient(bedrockClient *bedrockruntime.Client, opts ...Option) *Client {
 	return c
 }
 
-func (c *Client) Message(ctx context.Context, req *claude.MessageRequest) (claude.MessageResponse, error) {
+func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, options ...clientiface.Option) (claude.MessageResponse, error) {
 	if req.AnthropicVersion == "" {
 		req.AnthropicVersion = "bedrock-2023-05-31"
 	}

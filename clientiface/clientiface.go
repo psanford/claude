@@ -7,5 +7,9 @@ import (
 )
 
 type Client interface {
-	Message(ctx context.Context, req *claude.MessageRequest) (claude.MessageResponse, error)
+	Message(ctx context.Context, req *claude.MessageRequest, options ...Option) (claude.MessageResponse, error)
+}
+
+type Option interface {
+	set(*Client)
 }
