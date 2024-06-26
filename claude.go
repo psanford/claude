@@ -372,6 +372,8 @@ type ContentBlockStart struct {
 	ContentBlock struct {
 		Text string `json:"text"`
 		Type string `json:"type"`
+		Name string `json:"name"`
+		ID   string `json:"id"`
 	} `json:"content_block"`
 	Index int `json:"index"`
 }
@@ -389,8 +391,9 @@ func (c *MessagePing) Text() string {
 
 type ContentBlockDelta struct {
 	Delta struct {
-		Text string `json:"text"`
-		Type string `json:"type"`
+		Text        string `json:"text"`
+		PartialJson string `json:"partial_json"`
+		Type        string `json:"type"`
 	} `json:"delta"`
 	Index int64 `json:"index"`
 }
