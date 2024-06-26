@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime/types"
 	"github.com/psanford/claude"
 	"github.com/psanford/claude/clientiface"
+	"github.com/psanford/claude/internal/request"
 )
 
 type Client struct {
@@ -30,6 +31,8 @@ func NewClient(bedrockClient *bedrockruntime.Client, opts ...Option) *Client {
 }
 
 func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, options ...clientiface.Option) (claude.MessageResponse, error) {
+	request.SetDefaults(req)
+
 	if req.AnthropicVersion == "" {
 		req.AnthropicVersion = "bedrock-2023-05-31"
 	}

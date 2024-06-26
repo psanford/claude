@@ -8,6 +8,7 @@ import (
 
 	"github.com/psanford/claude"
 	"github.com/psanford/claude/clientiface"
+	"github.com/psanford/claude/internal/request"
 	"github.com/psanford/claude/internal/responseparser"
 )
 
@@ -31,6 +32,7 @@ func NewClient(apiKey string, opts ...Option) *Client {
 }
 
 func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, options ...clientiface.Option) (claude.MessageResponse, error) {
+	request.SetDefaults(req)
 	jsonReq, err := json.Marshal(req)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ import (
 
 	"github.com/psanford/claude"
 	"github.com/psanford/claude/clientiface"
+	"github.com/psanford/claude/internal/request"
 	"github.com/psanford/claude/internal/responseparser"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -35,6 +36,8 @@ func NewClient(opts ...Option) *Client {
 }
 
 func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, options ...clientiface.Option) (claude.MessageResponse, error) {
+	request.SetDefaults(req)
+
 	if req.AnthropicVersion == "" {
 		req.AnthropicVersion = "vertex-2023-10-16"
 	}
