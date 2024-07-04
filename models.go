@@ -21,3 +21,11 @@ func Models() []string {
 		Claude1Dot2Instant,
 	}
 }
+
+func CurrentModels() []string {
+	return []string{
+		Claude3Dot5Sonnet,
+		Claude3Opus,
+		Claude3Haiku,
+	}
+}
