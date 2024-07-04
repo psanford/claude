@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
@@ -15,7 +16,8 @@ import (
 )
 
 type Client struct {
-	br *bedrockruntime.Client
+	br          *bedrockruntime.Client
+	debugLogger *slog.Logger
 }
 
 var clientIfaceAssert = clientiface.Client(&Client{})

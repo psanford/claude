@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -21,6 +22,7 @@ type Client struct {
 	region       string
 	credentials  *google.Credentials
 	roundTripper http.RoundTripper
+	debugLogger  *slog.Logger
 }
 
 var clientIfaceAssert = clientiface.Client(&Client{})

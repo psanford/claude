@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/psanford/claude"
@@ -17,6 +18,7 @@ var MessagesURL = "https://api.anthropic.com/v1/messages"
 type Client struct {
 	apiKey       string
 	roundTripper http.RoundTripper
+	debugLogger  *slog.Logger
 }
 
 var clientIfaceAssert = clientiface.Client(&Client{})
@@ -56,7 +58,7 @@ func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, option
 		return nil, err
 	}
 
-	return responseparser.HandleResponse(ctx, resp)
+	return responseparser.HandleResponse(ctx, resp, c.debugLogger)
 }
 
 func (c *Client) httpClient() *http.Client {

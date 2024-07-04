@@ -1,6 +1,7 @@
 package vertex
 
 import (
+	"log/slog"
 	"net/http"
 
 	"golang.org/x/oauth2/google"
@@ -23,6 +24,20 @@ func (o *roundTripperOption) set(c *Client) {
 func WithRoundTripper(r http.RoundTripper) Option {
 	return &roundTripperOption{
 		r: r,
+	}
+}
+
+type debugLoggerOption struct {
+	l *slog.Logger
+}
+
+func (o *debugLoggerOption) set(c *Client) {
+	c.debugLogger = o.l
+}
+
+func WithDebugLogger(l *slog.Logger) Option {
+	return &debugLoggerOption{
+		l: l,
 	}
 }
 

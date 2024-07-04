@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"mime"
 	"net/http"
 
 	"github.com/psanford/claude"
 )
 
-func HandleResponse(ctx context.Context, resp *http.Response) (claude.MessageResponse, error) {
+func HandleResponse(ctx context.Context, resp *http.Response, debugLogger *slog.Logger) (claude.MessageResponse, error) {
 	if resp.StatusCode != 200 {
 		r := io.LimitReader(resp.Body, 1<<13)
 		body, err := io.ReadAll(r)
@@ -29,15 +30,15 @@ func HandleResponse(ctx context.Context, resp *http.Response) (claude.MessageRes
 	contentType := resp.Header.Get("Content-Type")
 	mediatype, _, _ := mime.ParseMediaType(contentType)
 	if mediatype == "text/event-stream" {
-		return handleSSE(ctx, resp)
+		return handleSSE(ctx, resp, debugLogger)
 	} else if mediatype == "application/json" {
-		return handleNonStreamingResponse(ctx, resp)
+		return handleNonStreamingResponse(ctx, resp, debugLogger)
 	} else {
 		return nil, fmt.Errorf("unexpected response content-type: %s", contentType)
 	}
 }
 
-func handleSSE(ctx context.Context, resp *http.Response) (claude.MessageResponse, error) {
+func handleSSE(ctx context.Context, resp *http.Response, debugLogger *slog.Logger) (claude.MessageResponse, error) {
 	eventsCh := decodeSSE(ctx, resp.Body)
 
 	ch := make(chan claude.MessageEvent)
@@ -50,6 +51,10 @@ func handleSSE(ctx context.Context, resp *http.Response) (claude.MessageResponse
 		defer close(ch)
 
 		for evt := range eventsCh {
+			if debugLogger != nil && debugLogger.Enabled(ctx, slog.LevelDebug) {
+				debugLogger.Debug("sse event", "event", evt)
+			}
+
 			var msg claude.MessageEvent
 			if evt.Error != nil {
 				msg = claude.MessageEvent{
@@ -122,12 +127,15 @@ func handleSSE(ctx context.Context, resp *http.Response) (claude.MessageResponse
 	return &meta, nil
 }
 
-func handleNonStreamingResponse(ctx context.Context, resp *http.Response) (claude.MessageResponse, error) {
+func handleNonStreamingResponse(ctx context.Context, resp *http.Response, debugLogger *slog.Logger) (claude.MessageResponse, error) {
 	d := json.NewDecoder(resp.Body)
 	var msg claude.MessageStart
 	err := d.Decode(&msg)
 	if err != nil {
 		return nil, err
+	}
+	if debugLogger != nil && debugLogger.Enabled(ctx, slog.LevelDebug) {
+		debugLogger.Debug("response", "message_start", msg)
 	}
 
 	ch := make(chan claude.MessageEvent)
