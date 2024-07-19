@@ -467,7 +467,7 @@ func NewClientError(err error) *ClientError {
 }
 
 func (c *ClientError) Error() string {
-	return c.Error()
+	return c.error.Error()
 }
 
 func (c *ClientError) Text() string {
