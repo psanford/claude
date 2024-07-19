@@ -88,6 +88,8 @@ func handleSSE(ctx context.Context, resp *http.Response, debugLogger *slog.Logge
 				innerMsg = &claude.MessageDelta{}
 			case "message_stop":
 				innerMsg = &claude.MessageStop{}
+			case "error":
+				innerMsg = &claude.ClaudeError{}
 			default:
 				msg = claude.MessageEvent{
 					Type: "_client_error",

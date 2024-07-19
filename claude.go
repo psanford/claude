@@ -444,8 +444,11 @@ func (c *MessageStop) Text() string {
 }
 
 type ClaudeError struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
+	Err struct {
+		Type    string `json:"type"`
+		Message string `json:"message"`
+		Details string `json:"details"`
+	} `json:"error"`
 }
 
 func (c *ClaudeError) Text() string {
@@ -453,7 +456,7 @@ func (c *ClaudeError) Text() string {
 }
 
 func (c ClaudeError) Error() string {
-	return fmt.Sprintf("%s: %s", c.Type, c.Message)
+	return fmt.Sprintf("ClaudeError type=%q message=%q details=%q", c.Err.Type, c.Err.Message, c.Err.Details)
 }
 
 type ClientError struct {
