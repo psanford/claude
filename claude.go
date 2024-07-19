@@ -165,7 +165,7 @@ func (c *MessageStart) Text() string {
 }
 
 func (m *MessageStart) UnmarshalJSON(b []byte) error {
-	type concreteResponse struct {
+	type ConcreteResponse struct {
 		ID           string             `json:"id"`
 		Type         string             `json:"type"`
 		Role         string             `json:"role"`
@@ -179,10 +179,22 @@ func (m *MessageStart) UnmarshalJSON(b []byte) error {
 		} `json:"usage"`
 	}
 
-	var c concreteResponse
-	err := json.Unmarshal(b, &c)
+	type hackyBimodalResponse struct {
+		*ConcreteResponse
+		InnerMessage *ConcreteResponse `json:"message"`
+	}
+
+	var hack hackyBimodalResponse
+	err := json.Unmarshal(b, &hack)
 	if err != nil {
 		return err
+	}
+
+	var c ConcreteResponse
+	if hack.InnerMessage != nil {
+		c = *hack.InnerMessage
+	} else {
+		c = *hack.ConcreteResponse
 	}
 
 	m.ID = c.ID

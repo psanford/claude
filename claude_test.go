@@ -52,6 +52,37 @@ func TestUnmarshalMessageResponse(t *testing.T) {
 	if !cmp.Equal(mr, expect) {
 		t.Fatalf(cmp.Diff(mr, expect))
 	}
+
+	respJSON = `{
+  "type": "message_start",
+  "message": {
+	  "content": [
+	    {
+	      "text": "Hi! My name is Claude.",
+	      "type": "text"
+	    }
+	  ],
+	  "id": "msg_013Zva2CMHLNnXjNJJKqJ2EF",
+	  "model": "claude-3-opus-20240229",
+	  "role": "assistant",
+	  "stop_reason": "end_turn",
+	  "stop_sequence": null,
+	  "type": "message",
+	  "usage": {
+	    "input_tokens": 10,
+	    "output_tokens": 25
+	  }
+	}
+}`
+
+	mr = MessageStart{}
+	err = json.Unmarshal([]byte(respJSON), &mr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cmp.Equal(mr, expect) {
+		t.Fatalf(cmp.Diff(mr, expect))
+	}
 }
 
 func TestMessageTurnUnmarshalJSON(t *testing.T) {
@@ -214,4 +245,8 @@ func TestMessageTurnUnmarshalJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestUmarshalMessageStart(t *testing.T) {
+
 }
