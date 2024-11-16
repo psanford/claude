@@ -2,8 +2,8 @@ package claude
 
 const (
 	Claude3Dot5SonnetLatest = "claude-3-5-sonnet-latest"
+	Claude3Dot5HaikuLatest  = "claude-3-5-haiku-latest"
 	Claude3OpusLatest       = "claude-3-opus-latest"
-	Claude3HaikuLatest      = "claude-3-haiku-latest"
 
 	Claude3Dot5Sonnet2410 = "claude-3-5-sonnet-20241022"
 	Claude3Dot5Sonnet     = "claude-3-5-sonnet-20240620"
