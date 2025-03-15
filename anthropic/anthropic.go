@@ -48,6 +48,7 @@ func (c *Client) Message(ctx context.Context, req *claude.MessageRequest, option
 	headers := make(http.Header)
 	headers.Add("anthropic-version", "2023-06-01")
 	headers.Add("anthropic-beta", "max-tokens-3-5-sonnet-2024-07-15")
+	headers.Add("anthropic-beta", "output-128k-2025-02-19")
 	headers.Add("x-api-key", c.apiKey)
 	headers.Add("content-type", "application/json")
 	httpReq.Header = headers
