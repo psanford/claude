@@ -9,6 +9,7 @@ import (
 type VertexModel string
 
 const (
+	Claude3Dot7Sonnet   VertexModel = "claude-3-7-sonnet@20250219"
 	Claude3Dot5SonnetV2 VertexModel = "claude-3-5-sonnet-v2@20241022"
 	Claude3Dot5Haiku    VertexModel = "claude-3-5-haiku@20241022"
 	Claude3Opus         VertexModel = "claude-3-opus@20240229"
@@ -18,6 +19,7 @@ const (
 )
 
 var Models = []VertexModel{
+	Claude3Dot7Sonnet,
 	Claude3Dot5SonnetV2,
 	Claude3Dot5Haiku,
 	Claude3Dot5Sonnet,
@@ -28,6 +30,8 @@ var Models = []VertexModel{
 
 func (m VertexModel) PrettyName() string {
 	switch m {
+	case Claude3Dot7Sonnet:
+		return "Claude 3.7 Sonnet"
 	case Claude3Dot5SonnetV2:
 		return "Claude 3.5 Sonnet V2"
 	case Claude3Dot5Sonnet:
@@ -47,6 +51,8 @@ func (m VertexModel) PrettyName() string {
 
 func ModelToVertexModel(m string) (VertexModel, error) {
 	switch m {
+	case claude.Claude3Dot7SonnetLatest, claude.Claude3Dot7Sonnet2502, string(Claude3Dot7Sonnet):
+		return Claude3Dot7Sonnet, nil
 	case claude.Claude3Dot5Sonnet2410, string(Claude3Dot5SonnetV2):
 		return Claude3Dot5SonnetV2, nil
 	case claude.Claude3Dot5Haiku, string(Claude3Dot5Haiku):

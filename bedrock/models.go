@@ -11,6 +11,7 @@ import (
 type BedrockModel string
 
 const (
+	Claude3Dot7Sonnet   BedrockModel = "anthropic.claude-3-7-sonnet-20250219-v1:0"
 	Claude3Dot5SonnetV2 BedrockModel = "anthropic.claude-3-5-sonnet-20241022-v2:0"
 	Claude3Dot5Haiku    BedrockModel = "anthropic.claude-3-5-haiku-20241022-v1:0"
 	Claude3Dot5Sonnet   BedrockModel = "anthropic.claude-3-5-sonnet-20240620-v1:0"
@@ -23,6 +24,7 @@ const (
 )
 
 var Models = []BedrockModel{
+	Claude3Dot7Sonnet,
 	Claude3Dot5SonnetV2,
 	Claude3Dot5Haiku,
 	Claude3Dot5Sonnet,
@@ -36,6 +38,8 @@ var Models = []BedrockModel{
 
 func (m BedrockModel) PrettyName() string {
 	switch m {
+	case Claude3Dot7Sonnet:
+		return "Claude 3.7 Sonnet"
 	case Claude3Dot5SonnetV2:
 		return "Claude 3.5 Sonnet v2"
 	case Claude3Dot5Haiku:
@@ -61,6 +65,8 @@ func (m BedrockModel) PrettyName() string {
 
 func ModelToBedrockModel(m string) (BedrockModel, error) {
 	switch m {
+	case claude.Claude3Dot7SonnetLatest, claude.Claude3Dot7Sonnet2502, string(Claude3Dot7Sonnet):
+		return Claude3Dot7Sonnet, nil
 	case claude.Claude3Dot5Sonnet2410, string(Claude3Dot5SonnetV2):
 		return Claude3Dot5SonnetV2, nil
 	case claude.Claude3Dot5Haiku, string(Claude3Dot5Haiku):

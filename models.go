@@ -1,10 +1,12 @@
 package claude
 
 const (
+	Claude3Dot7SonnetLatest = "claude-3-7-sonnet-latest"
 	Claude3Dot5SonnetLatest = "claude-3-5-sonnet-latest"
 	Claude3Dot5HaikuLatest  = "claude-3-5-haiku-latest"
 	Claude3OpusLatest       = "claude-3-opus-latest"
 
+	Claude3Dot7Sonnet2502 = "claude-3-7-sonnet-20250219"
 	Claude3Dot5Sonnet2410 = "claude-3-5-sonnet-20241022"
 	Claude3Dot5Sonnet     = "claude-3-5-sonnet-20240620"
 	Claude3Dot5Haiku      = "claude-3-5-haiku-20241022"
@@ -18,6 +20,7 @@ const (
 
 func Models() []string {
 	return []string{
+		Claude3Dot7Sonnet2502,
 		Claude3Dot5Sonnet2410,
 		Claude3Opus,
 		Claude3Dot5Haiku,
@@ -32,8 +35,8 @@ func Models() []string {
 
 func CurrentModels() []string {
 	return []string{
-		Claude3Dot5SonnetLatest,
-		Claude3OpusLatest,
+		Claude3Dot7SonnetLatest,
 		Claude3Dot5Haiku,
+		Claude3OpusLatest,
 	}
 }
